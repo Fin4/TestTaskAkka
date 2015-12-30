@@ -15,7 +15,7 @@ public class Main {
         ActorSystem countSystem = ActorSystem.create("countSystem");
         final ActorRef adderManager = countSystem.actorOf(Props.create(AdderManager.class), "adderManager");
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(createFile()))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(createFile("files/")))) {
             String line;
             while ((line = reader.readLine()) != null) {
 
@@ -31,15 +31,15 @@ public class Main {
         }
     }
 
-    public static File createFile() throws IOException {
+    public static File createFile(String path) throws IOException {
 
-        File directory = new File("files/");
+        File directory = new File(path);
 
-        if (!directory.exists() && directory.mkdir()) {
+        if (!directory.exists() && !directory.mkdirs()) {
             throw new IOException();
         }
 
-        File file = new File("files/nonSorted.txt");
+        File file = new File(path + "nonSorted.txt");
         try(BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
 
             Random random = new Random();
