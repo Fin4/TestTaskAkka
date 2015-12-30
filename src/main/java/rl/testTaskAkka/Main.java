@@ -33,16 +33,19 @@ public class Main {
 
     public static File createFile() throws IOException {
 
+        File directory = new File("files/");
+
+        if (!directory.exists() && directory.mkdir()) {
+            throw new IOException();
+        }
+
         File file = new File("files/nonSorted.txt");
         try(BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
 
             Random random = new Random();
+
             for (int i = 0; i <= 99999; i++) {
-
-                int a = (i < 1000) ? i : (i % 1000);
-
                 String line = String.format("%d;%d", random.nextInt(1001), random.nextInt(10));
-                //String line = String.format("%d;%d", a, a);
                 writer.write(line);
                 writer.newLine();
             }

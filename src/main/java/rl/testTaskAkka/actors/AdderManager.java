@@ -72,6 +72,7 @@ public class AdderManager extends UntypedActor {
 
         }
         else {
+            log.info(String.format("Create new actor Adder with name adder%d", id));
             actorRef = getContext().actorOf(Props.create(Adder.class), "adder" + id);
             actors.put(id, actorRef);
         }
