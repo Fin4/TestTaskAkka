@@ -40,27 +40,8 @@ public class AdderManager extends UntypedActor {
             String msg = (String) o;
 
             if (msg.equals("END_OF_FILE")) {
-                for (Map.Entry<Integer, ActorRef> entry : actorRefs.entrySet()) {
-                    Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, "seconds"));
-                    Future<Object> f1 = Patterns.ask(entry.getValue(), "END_OF_FILE", timeout);
-                    futures.add(f1);
-                }
-                Future<Iterable<Object>> futuresSequence = sequence(futures, context().system().dispatcher());
-                futuresSequence.onComplete(new OnComplete<Iterable<Object>>() {
-                    @Override
-                    public void onComplete(Throwable throwable, Iterable<Object> objects) throws Throwable {
-                        File file = new File("files/Sorted.txt");
-                        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-                        for (Object o : objects) {
-                            writer.write(o.toString());
-                            writer.newLine();
-                        }
-                        writer.close();
-                        getContext().system().shutdown();
-                    }
-                }, getContext().dispatcher());
+                generateResultAndShutdown();
             }
-
         }
 
         else unhandled(o);
@@ -78,6 +59,30 @@ public class AdderManager extends UntypedActor {
             actorRefs.put(id, actorRef);
         }
         return actorRef;
+    }
+
+    private void generateResultAndShutdown() {
+        
+        for (Map.Entry<Integer, ActorRef> entry : actorRefs.entrySet()) {
+            Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, "seconds"));
+            Future<Object> f1 = Patterns.ask(entry.getValue(), "END_OF_FILE", timeout);
+            futures.add(f1);
+        }
+
+        Future<Iterable<Object>> futuresSequence = sequence(futures, context().system().dispatcher());
+        futuresSequence.onComplete(new OnComplete<Iterable<Object>>() {
+            @Override
+            public void onComplete(Throwable throwable, Iterable<Object> objects) throws Throwable {
+                File file = new File("files/Sorted.txt");
+                BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+                for (Object o : objects) {
+                    writer.write(o.toString());
+                    writer.newLine();
+                }
+                writer.close();
+                getContext().system().shutdown();
+            }
+        }, getContext().dispatcher());
     }
 
     public static class Message implements Serializable {
