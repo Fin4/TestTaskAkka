@@ -3,6 +3,9 @@ package rl.testTaskAkka.actors;
 
 import akka.actor.*;
 
+/**
+ * actor that counts the amount for the specified id
+ */
 public class Adder extends UntypedActor {
 
     private int id;

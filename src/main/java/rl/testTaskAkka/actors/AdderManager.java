@@ -18,7 +18,9 @@ import java.util.Map;
 
 import static akka.dispatch.Futures.sequence;
 
-
+/**
+ * Actor, which receiving messages from outside and send them to actor Adder selected by id
+ */
 public class AdderManager extends UntypedActor {
 
     Map<Integer, ActorRef> actorRefs = new HashMap<>();
