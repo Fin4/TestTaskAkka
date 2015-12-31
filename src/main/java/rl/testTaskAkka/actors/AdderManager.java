@@ -21,7 +21,7 @@ import static akka.dispatch.Futures.sequence;
 
 public class AdderManager extends UntypedActor {
 
-    Map<Integer, ActorRef> actors = new HashMap<>();
+    Map<Integer, ActorRef> actorRefs = new HashMap<>();
 
     final List<Future<Object>> futures = new ArrayList<>();
 
@@ -38,7 +38,7 @@ public class AdderManager extends UntypedActor {
             String msg = (String) o;
 
             if (msg.equals("END_OF_FILE")) {
-                for (Map.Entry<Integer, ActorRef> entry : actors.entrySet()) {
+                for (Map.Entry<Integer, ActorRef> entry : actorRefs.entrySet()) {
                     Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, "seconds"));
                     Future<Object> f1 = Patterns.ask(entry.getValue(), "END_OF_FILE", timeout);
                     futures.add(f1);
@@ -67,14 +67,13 @@ public class AdderManager extends UntypedActor {
     private ActorRef getActorRef(int id) {
 
         final ActorRef actorRef;
-        if (actors.containsKey(id)) {
-            actorRef = actors.get(id);
-
+        if (actorRefs.containsKey(id)) {
+            actorRef = actorRefs.get(id);
         }
         else {
             log.info(String.format("Create new actor Adder with name adder%d", id));
-            actorRef = getContext().actorOf(Props.create(Adder.class), "adder" + id);
-            actors.put(id, actorRef);
+            actorRef = getContext().actorOf(Props.create(Adder.class, id), "adder" + id);
+            actorRefs.put(id, actorRef);
         }
         return actorRef;
     }

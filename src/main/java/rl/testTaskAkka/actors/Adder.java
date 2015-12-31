@@ -6,15 +6,16 @@ import akka.actor.*;
 public class Adder extends UntypedActor {
 
     private int id;
-    private int totalAmount = 0;
+    private int totalAmount;
 
     @Override
     public void onReceive(Object o) throws Exception {
 
         if (o instanceof AdderManager.Message) {
             AdderManager.Message msg = (AdderManager.Message) o;
-            id = msg.getId();
-            totalAmount += msg.getAmount();
+            if (id == msg.getId()) {
+                totalAmount += msg.getAmount();
+            }
         }
         else if (o instanceof String) {
             if (o.toString().equals("END_OF_FILE")) {
@@ -22,5 +23,10 @@ public class Adder extends UntypedActor {
             }
         }
         else unhandled(o);
+    }
+
+    public Adder(int id) {
+        this.id = id;
+        this.totalAmount = 0;
     }
 }
