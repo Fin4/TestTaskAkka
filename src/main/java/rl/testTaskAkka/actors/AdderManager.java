@@ -62,7 +62,7 @@ public class AdderManager extends UntypedActor {
     }
 
     private void generateResultAndShutdown() {
-        
+
         for (Map.Entry<Integer, ActorRef> entry : actorRefs.entrySet()) {
             Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, "seconds"));
             Future<Object> f1 = Patterns.ask(entry.getValue(), "END_OF_FILE", timeout);
