@@ -6,16 +6,34 @@ import akka.actor.Props;
 import rl.testTaskAkka.actors.AdderManager;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.stream.*;
 import java.util.Random;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         ActorSystem countSystem = ActorSystem.create("countSystem");
         final ActorRef adderManager = countSystem.actorOf(Props.create(AdderManager.class), "adderManager");
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(createFile("files/")))) {
+        createFile("files/");
+
+        try {
+            Files.lines(Paths.get("files/nonSorted.txt")).forEach(s -> {
+                String[] tokens = s.split(";", 2);
+                AdderManager.Message message = new AdderManager.Message(Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]));
+
+                adderManager.tell(message, ActorRef.noSender());
+            });
+            adderManager.tell("END_OF_FILE", ActorRef.noSender());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+/*        try (BufferedReader reader = new BufferedReader(new FileReader(createFile("files/")))) {
             String line;
             while ((line = reader.readLine()) != null) {
 
@@ -28,7 +46,7 @@ public class Main {
             adderManager.tell("END_OF_FILE", ActorRef.noSender());
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
     public static File createFile(String path) throws IOException {
