@@ -1,16 +1,19 @@
 package rl.testTaskAkka.actors;
 
+import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import akka.actor.UntypedActor;
 import akka.dispatch.OnComplete;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import akka.japi.pf.ReceiveBuilder;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
 import scala.concurrent.Future;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +24,7 @@ import static akka.dispatch.Futures.sequence;
 /**
  * Actor, which receiving messages from outside and send them to actor Adder selected by id
  */
-public class AdderManager extends UntypedActor {
+public class AdderManager extends AbstractActor {
 
     Map<Integer, ActorRef> actorRefs = new HashMap<>();
 
@@ -29,22 +32,11 @@ public class AdderManager extends UntypedActor {
 
     LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
-    @Override
-    public void onReceive(Object o) throws Exception {
-
-        if (o instanceof Message) {
-            Message msg = (Message) o;
-            getActorRef(msg.getId()).tell(new Message(msg.getId(), msg.getAmount()), getSelf());
-        }
-        else if (o instanceof String) {
-            String msg = (String) o;
-
-            if (msg.equals("END_OF_FILE")) {
-                generateResultAndShutdown();
-            }
-        }
-
-        else unhandled(o);
+    public AdderManager() {
+        receive(ReceiveBuilder
+                .match(Message.class, msg -> getActorRef(msg.getId()).tell(new Message(msg.getId(), msg.getAmount()), self()))
+                .match(String.class, msg -> generateResultAndShutdown())
+                .build());
     }
 
     private ActorRef getActorRef(int id) {
@@ -55,7 +47,7 @@ public class AdderManager extends UntypedActor {
         }
         else {
             log.info(String.format("Create new actor Adder with name adder%d", id));
-            actorRef = getContext().actorOf(Props.create(Adder.class, id), "adder" + id);
+            actorRef = getContext().actorOf(Props.create(Adder.class, () -> new Adder(id)));
             actorRefs.put(id, actorRef);
         }
         return actorRef;
@@ -63,17 +55,18 @@ public class AdderManager extends UntypedActor {
 
     private void generateResultAndShutdown() {
 
-        for (Map.Entry<Integer, ActorRef> entry : actorRefs.entrySet()) {
+        actorRefs.entrySet().stream().forEach(integerActorRefEntry -> {
             Timeout timeout = new Timeout(scala.concurrent.duration.Duration.create(10, "seconds"));
-            Future<Object> f1 = Patterns.ask(entry.getValue(), "END_OF_FILE", timeout);
+            Future<Object> f1 = Patterns.ask(integerActorRefEntry.getValue(), "END_OF_FILE", timeout);
             futures.add(f1);
-        }
+        });
 
-        Future<Iterable<Object>> futuresSequence = sequence(futures, context().system().dispatcher());
-        futuresSequence.onComplete(new OnComplete<Iterable<Object>>() {
+        sequence(futures, context().system().dispatcher()).onComplete(new OnComplete<Iterable<Object>>() {
             @Override
             public void onComplete(Throwable throwable, Iterable<Object> objects) throws Throwable {
+
                 File file = new File("files/Sorted.txt");
+
                 BufferedWriter writer = new BufferedWriter(new FileWriter(file));
                 for (Object o : objects) {
                     writer.write(o.toString());

@@ -28,25 +28,11 @@ public class Main {
 
                 adderManager.tell(message, ActorRef.noSender());
             });
+
             adderManager.tell("END_OF_FILE", ActorRef.noSender());
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-/*        try (BufferedReader reader = new BufferedReader(new FileReader(createFile("files/")))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-
-                String[] tokens = line.split(";", 2);
-                AdderManager.Message message = new AdderManager.Message(Integer.parseInt(tokens[0]), Integer.parseInt(tokens[1]));
-
-                adderManager.tell(message, ActorRef.noSender());
-            }
-
-            adderManager.tell("END_OF_FILE", ActorRef.noSender());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }*/
     }
 
     public static File createFile(String path) throws IOException {

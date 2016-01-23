@@ -2,34 +2,24 @@ package rl.testTaskAkka.actors;
 
 
 import akka.actor.*;
+import akka.japi.pf.ReceiveBuilder;
 
 /**
  * actor that counts the amount for the specified id
  */
-public class Adder extends UntypedActor {
+public class Adder extends AbstractActor {
 
     private int id;
     private int totalAmount;
 
-    @Override
-    public void onReceive(Object o) throws Exception {
-
-        if (o instanceof AdderManager.Message) {
-            AdderManager.Message msg = (AdderManager.Message) o;
-            if (id == msg.getId()) {
-                totalAmount += msg.getAmount();
-            }
-        }
-        else if (o instanceof String) {
-            if (o.toString().equals("END_OF_FILE")) {
-                sender().tell(new AdderManager.AdderResultMessage(this.id, this.totalAmount), getSelf());
-            }
-        }
-        else unhandled(o);
-    }
-
     public Adder(int id) {
         this.id = id;
         this.totalAmount = 0;
+
+        receive(ReceiveBuilder
+                .match(AdderManager.Message.class, message -> totalAmount += message.getAmount())
+                .match(String.class, message -> sender().tell(new AdderManager.AdderResultMessage(this.id, this.totalAmount), self()))
+                .build());
     }
+
 }
